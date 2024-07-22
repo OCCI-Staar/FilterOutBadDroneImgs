@@ -1,0 +1,60 @@
+!pip install geetools===0.6.11
+
+import os
+import shutil
+from geetools import batch
+
+# Set your local source and destination directories
+source_directory = r'M:\2024\External\AFSC_Hail\RAW\20240717_MS_M300\Blue'  # Adjust the path as needed
+destination_directory = r'M:\2024\External\AFSC_Hail\RAW\20240717_MS_M300_Cleaned\Blue'  # Adjust the path as needed
+
+error_images = []
+print(len(error_images))
+
+
+def count_tiff_images(source_directory):
+    tiff_extensions = ['.tiff', '.tif']
+    tiff_count = 0
+
+    for root, dirs, files in os.walk(source_directory):
+        for file in files:
+            if any(file.lower().endswith(ext) for ext in tiff_extensions):
+                tiff_count += 1
+   
+    return tiff_count
+
+if os.path.exists(source_directory):
+    num_tiff_images = count_tiff_images(source_directory)
+    print(f"Number of TIFF images in {source_directory}: {num_tiff_images}")
+else:
+    print(f"Source directory '{source_directory}' does not exist.")
+
+def copy_valid_images(source_directory, destination_directory, error_images):
+    if not os.path.exists(destination_directory):
+        os.makedirs(destination_directory)
+     
+    folder_counts = {}
+
+    for root, dirs, files in os.walk(source_directory):
+        for file in files:
+            if file not in error_images:
+                source_file_path = os.path.join(root, file)
+                relative_path = os.path.relpath(root, source_directory)
+                destination_dir = os.path.join(destination_directory, relative_path)
+               
+                if not os.path.exists(destination_dir):
+                    os.makedirs(destination_dir)
+
+                destination_file_path = os.path.join(destination_dir, file)
+                shutil.copy2(source_file_path, destination_file_path)
+
+                # Update count for the destination directory
+                folder_counts[relative_path] = folder_counts.get(relative_path, 0) + 1
+    # Print the counts
+    for folder, count in folder_counts.items():
+        print(f"Copied {count} images to {os.path.join(destination_directory, folder)}")
+
+# Copy valid images to the new directory
+copy_valid_images(source_directory, destination_directory, error_images)
+
+print(f"Valid images have been copied to {destination_directory}")
